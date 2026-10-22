@@ -7,6 +7,7 @@ import { OBJLoader } from 'three/examples/jsm/loaders/OBJLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { makeTexture, IS_MODEL, IS_IMAGE } from './decode.js';
 import { saveWork, loadWork, clearWork, getSettings, setSettings } from './store.js';
+import { ViewGizmo } from './gizmo.js';
 
 const $ = (id) => document.getElementById(id);
 let S = getSettings();
@@ -266,13 +267,18 @@ $('sRestore').onchange = () => { saveSet({ restoreLast: $('sRestore').checked })
 $('sClear').onclick = async () => { await clearWork(); toast('저장된 작업을 지웠어요', 1200); };
 $('sClose').onclick = () => $('dlg').close();
 
+// ---------------------------------------------------------------- 시점 기즈모 (블렌더식, 2026-10-22 피드백)
+const gizmo = new ViewGizmo(camera, controls, { size: 112, style: { right: '14px', top: 'calc(env(safe-area-inset-top) + 74px)' }, onView: (n) => n && toast(n, 700) });
+$('bHide').addEventListener('click', () => (gizmo.canvas.style.top = 'calc(env(safe-area-inset-top) + 14px)'));
+$('bShow').addEventListener('click', () => (gizmo.canvas.style.top = 'calc(env(safe-area-inset-top) + 74px)'));
+
 // ---------------------------------------------------------------- 시작
 resize();
-(function loop() { requestAnimationFrame(loop); controls.update(); renderer.render(scene, camera); })();
+(function loop() { requestAnimationFrame(loop); controls.update(); gizmo.update(); renderer.render(scene, camera); })();
 if (S.restoreLast) {
   const w = await loadWork();
   if (w?.model) await loadModel(w.model, { textures: w.textures });
 }
 // 오프라인에서도 열리게 (홈 화면 앱) — https 또는 localhost에서만
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) navigator.serviceWorker.register('./sw.js').catch(() => {});
-window.__c3d = { st, loadModel, setTexture, applyImages, reloadWith, scene, camera, renderer, controls };
+window.__c3d = { st, loadModel, setTexture, applyImages, reloadWith, scene, camera, renderer, controls, gizmo };
