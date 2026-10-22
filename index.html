@@ -47,6 +47,15 @@
     #matList div { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
     #matList div span:last-child { color: var(--muted); text-align: right; word-break: break-all; }
     input[type=file] { display: none; }
+    /* 폰(좁은 화면): 버튼 조금 작게 — 한 줄에 더 보이게 (나머지는 옆으로 밀기) */
+    @media (max-width: 600px) {
+      #bar { gap: 6px; padding: calc(var(--safe-t) + 6px) 8px 6px; }
+      button, select { font-size: 13px; min-height: 36px; padding: 0 10px; border-radius: 9px; }
+      select { max-width: 150px; padding-right: 24px; }
+      #fab button { min-height: 48px; font-size: 15px; padding: 0 18px; }
+      #toast { top: calc(var(--safe-t) + 60px); }
+      dialog label { grid-template-columns: 120px 1fr; }
+    }
   </style>
 </head>
 <body>

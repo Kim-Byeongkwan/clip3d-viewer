@@ -150,7 +150,10 @@ function resetView() {
   const box = new THREE.Box3().setFromObject(st.root), size = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
   const r = Math.max(size.x, size.y, size.z) || 1;
   camera.near = r / 500; camera.far = r * 100; camera.updateProjectionMatrix();
-  camera.position.copy(c).add(new THREE.Vector3(0, r * 0.1, r * 1.8));
+  // 화면 비율까지 따져 모델 전체가 들어오는 거리 (아이폰·세로 아이패드에서 팔·머리가 잘렸음 — 2026-10-22)
+  const vf = THREE.MathUtils.degToRad(camera.fov) / 2, hf = Math.atan(Math.tan(vf) * camera.aspect);
+  const dist = Math.max((size.y / 2) / Math.tan(vf), (Math.max(size.x, size.z) / 2) / Math.tan(hf)) * 1.15 + size.z / 2;
+  camera.position.copy(c).add(new THREE.Vector3(0, r * 0.05, dist));
   controls.target.copy(c); controls.update();
   key.position.copy(c).add(new THREE.Vector3(r, r * 2, r * 1.5)); key.target.position.copy(c);
 }
@@ -268,9 +271,10 @@ $('sClear').onclick = async () => { await clearWork(); toast('저장된 작업�
 $('sClose').onclick = () => $('dlg').close();
 
 // ---------------------------------------------------------------- 시점 기즈모 (블렌더식, 2026-10-22 피드백)
-const gizmo = new ViewGizmo(camera, controls, { size: 112, style: { right: '14px', top: 'calc(env(safe-area-inset-top) + 74px)' }, onView: (n) => n && toast(n, 700) });
+const phone = matchMedia('(max-width: 600px)').matches; // 폰은 기즈모 작게·위로
+const gizmo = new ViewGizmo(camera, controls, { size: phone ? 88 : 112, style: { right: phone ? '8px' : '14px', top: `calc(env(safe-area-inset-top) + ${phone ? 56 : 74}px)` }, onView: (n) => n && toast(n, 700) });
 $('bHide').addEventListener('click', () => (gizmo.canvas.style.top = 'calc(env(safe-area-inset-top) + 14px)'));
-$('bShow').addEventListener('click', () => (gizmo.canvas.style.top = 'calc(env(safe-area-inset-top) + 74px)'));
+$('bShow').addEventListener('click', () => (gizmo.canvas.style.top = `calc(env(safe-area-inset-top) + ${phone ? 56 : 74}px)`));
 
 // ---------------------------------------------------------------- 시작
 resize();
