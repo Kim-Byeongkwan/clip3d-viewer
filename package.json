@@ -1,0 +1,10 @@
+{
+  "name": "clip3d-web",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Clip3D Viewer 웹앱 (2026-10-22, 아이패드용): 그린 텍스처를 3D 모델에 입혀 보는 뷰어 — 사파리 '홈 화면에 추가'로 앱처럼",
+  "type": "module",
+  "scripts": { "dev": "vite --host --port 5195", "build": "vite build", "preview": "vite preview --host --port 5196" },
+  "dependencies": { "ag-psd": "^31.0.2", "sql.js": "^1.14.2", "three": "^0.170.0" },
+  "devDependencies": { "vite": "^5.4.10" }
+}

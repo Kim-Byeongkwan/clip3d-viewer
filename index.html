@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <title>Clip3D</title>
+  <!-- 홈 화면에 추가하면 주소창 없이 앱처럼 (아이패드 사파리) -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Clip3D" />
+  <meta name="theme-color" content="#24262b" />
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="./icon-180.png" />
+  <link rel="icon" href="./icon-192.png" />
+  <style>
+    :root { --bg: #3a3d44; --bar: #24262b; --fg: #eceef2; --muted: #9aa0aa; --line: rgba(255,255,255,.12); --acc: #4fd1ff; --safe-t: env(safe-area-inset-top); --safe-b: env(safe-area-inset-bottom); }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); font: 15px/1.4 -apple-system, "Apple SD Gothic Neo", sans-serif; overflow: hidden; user-select: none; -webkit-user-select: none; touch-action: none; overscroll-behavior: none; }
+    #bar { position: fixed; left: 0; right: 0; top: 0; padding: calc(var(--safe-t) + 8px) 12px 8px; display: flex; gap: 8px; align-items: center; background: var(--bar); border-bottom: 1px solid var(--line); z-index: 5; overflow-x: auto; scrollbar-width: none; }
+    #bar::-webkit-scrollbar { display: none; }
+    #bar.hidden { transform: translateY(-100%); }
+    button, select { font: inherit; color: var(--fg); background: #33363d; border: 1px solid var(--line); border-radius: 10px; min-height: 44px; padding: 0 14px; white-space: nowrap; flex: none; }
+    button:active { background: #41454e; }
+    button.on { border-color: var(--acc); color: var(--acc); }
+    button.primary { background: #2f6f86; border-color: #4fd1ff66; }
+    select { max-width: 240px; -webkit-appearance: none; appearance: none; padding-right: 28px; background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%); background-position: calc(100% - 16px) 50%, calc(100% - 11px) 50%; background-size: 5px 5px; background-repeat: no-repeat; }
+    .sep { width: 1px; height: 26px; background: var(--line); flex: none; }
+    #view { position: fixed; inset: 0; }
+    canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+    #empty { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--muted); pointer-events: none; font-size: 16px; line-height: 1.9; padding: 0 24px; }
+    #drop { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(79,209,255,.15); border: 3px dashed var(--acc); font-size: 20px; z-index: 9; pointer-events: none; }
+    #toast { position: fixed; left: 50%; top: calc(var(--safe-t) + 76px); transform: translateX(-50%); background: rgba(20,21,24,.92); border: 1px solid var(--line); border-radius: 12px; padding: 10px 16px; z-index: 8; display: none; max-width: 86vw; white-space: pre-wrap; text-align: center; }
+    #busy { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; background: rgba(0,0,0,.35); z-index: 7; font-size: 17px; }
+    #fab { position: fixed; right: 16px; bottom: calc(var(--safe-b) + 16px); z-index: 6; display: flex; gap: 10px; }
+    #fab button { min-height: 56px; border-radius: 28px; padding: 0 22px; font-size: 16px; box-shadow: 0 4px 16px rgba(0,0,0,.35); }
+    dialog { background: #2a2c31; color: var(--fg); border: 1px solid var(--line); border-radius: 16px; width: min(480px, 92vw); padding: 20px; }
+    dialog::backdrop { background: rgba(0,0,0,.4); }
+    dialog h3 { margin: 0 0 12px; font-size: 18px; }
+    dialog label { display: grid; grid-template-columns: 160px 1fr; gap: 10px; align-items: center; margin: 10px 0; min-height: 40px; }
+    dialog input[type=color] { width: 64px; height: 40px; border: 0; background: none; padding: 0; }
+    dialog input[type=range] { width: 100%; }
+    dialog input[type=checkbox] { width: 26px; height: 26px; }
+    dialog .row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+    .hint { color: var(--muted); font-size: 13px; line-height: 1.6; }
+    #matList { max-height: 40vh; overflow: auto; margin: 8px 0; }
+    #matList div { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+    #matList div span:last-child { color: var(--muted); text-align: right; word-break: break-all; }
+    input[type=file] { display: none; }
+  </style>
+</head>
+<body>
+  <div id="view"></div>
+  <div id="empty">[모델 열기]로 FBX · OBJ · GLB 모델을 고르고<br>[텍스처]로 PNG · JPG · PSD · CLIP 이미지를 고르세요<br><span class="hint">여러 장을 한 번에 고르면 재질 이름과 비슷한 이미지끼리 자동으로 연결돼요</span></div>
+  <div id="bar">
+    <button id="bModel" class="primary">모델 열기</button>
+    <span class="sep"></span>
+    <select id="mat" aria-label="재질"></select>
+    <button id="bTex">텍스처</button>
+    <span class="sep"></span>
+    <button data-mode="tex" class="on">텍스처</button>
+    <button data-mode="wiretex">와이어+텍스처</button>
+    <button data-mode="wire">와이어</button>
+    <span class="sep"></span>
+    <button id="bLight">조명</button>
+    <button id="bReset">시점 초기화</button>
+    <button id="bMats">재질 목록</button>
+    <button id="bSet">설정</button>
+    <button id="bHide">버튼 숨기기</button>
+  </div>
+  <div id="fab"><button id="bShow" style="display:none">버튼 보이기</button><button id="bReload" class="primary">↻ 다시 불러오기</button></div>
+  <div id="drop">여기에 놓기</div>
+  <div id="busy">불러오는 중…</div>
+  <div id="toast"></div>
+  <input type="file" id="fModel" />
+  <input type="file" id="fTex" multiple />
+  <input type="file" id="fReload" multiple />
+
+  <dialog id="dlgMats">
+    <h3>재질 · 연결된 텍스처</h3>
+    <div id="matList"></div>
+    <div class="row"><button id="mClose">닫기</button></div>
+  </dialog>
+  <dialog id="dlg">
+    <h3>설정</h3>
+    <label>와이어 색 <input type="color" id="sWire"></label>
+    <label>와이어 선명도 <input type="range" id="sWireA" min="0.05" max="1" step="0.05"></label>
+    <label>배경 색 <input type="color" id="sBg"></label>
+    <label>시작할 때 마지막 작업 <input type="checkbox" id="sRestore"></label>
+    <p class="hint">다시 불러오기: 클립 스튜디오에서 PNG·PSD로 '파일' 앱에 저장한 뒤 ↻를 누르고 그 파일들을 고르면 같은 이름의 재질에 다시 입혀져요. 모델도 같이 고르면 모델도 바뀌어요.<br>조작: 한 손가락 회전 · 두 손가락 이동·확대 · 두 번 톡 시점 초기화</p>
+    <div class="row"><button id="sClear">저장된 작업 지우기</button><button id="sClose">닫기</button></div>
+  </dialog>
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
